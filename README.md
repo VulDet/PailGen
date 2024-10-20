@@ -50,4 +50,4 @@ python calculate_combined_metrics.py
 # Acknowledgements
 - Special thanks to authors of VulMaster ([Zhou et al.](https://dl.acm.org/doi/abs/10.1145/3597503.3639222))
 - Special thanks to authors of TypeFix ([Peng et al.](https://arxiv.org/pdf/2306.01394))
-- Special thanks to dataset providers of CVEFixes ([Bhandari et al.](https://dl.acm.org/doi/pdf/10.1145/3475960.3475985)), Big-Vul ([Fan et al.](https://dl.acm.org/doi/10.1145/3379597.3387501)), and D2A ([Zheng et al.](https://arxiv.org/pdf/2102.07995).
+- Special thanks to dataset providers of CVEFixes ([Bhandari et al.](https://dl.acm.org/doi/pdf/10.1145/3475960.3475985)), Big-Vul ([Fan et al.](https://dl.acm.org/doi/10.1145/3379597.3387501)), and D2A ([Zheng et al.](https://arxiv.org/pdf/2102.07995)).
