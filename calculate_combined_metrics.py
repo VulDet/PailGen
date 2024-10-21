@@ -22,8 +22,7 @@ def normalize_answer(s):
         return ' '.join(text.split())
 
     def remove_punc(text):
-        exclude = set(string.punctuation)     # {'\\', ']', '_', ':', '{', '%', "'", '-', ')', ',', '+', '(', '.', '`', '#', '|', '}', '*', '!', ';', '"', '^', '/', '@', '[', '&', '$', '<', '>', '~', '?', '='}
-        # exclude = {'\\', ']', '_', ':', '{', '%', "'", '-', ')', ',', '+', '(', '.', '`', '#', '|', '}', '*', '!', ';', '"', '^', '/', '@', '[', '&', '$', '~', '?'}
+        exclude = set(string.punctuation)
         return ''.join(ch for ch in text if ch not in exclude)
 
     def lower(text):
@@ -36,7 +35,7 @@ def exact_match_score(prediction, ground_truth):
     normal_groundtruth = normalize_answer(ground_truth)
     if normal_groundtruth == normal_prediction:
         return True
-    return False       #normal_prediction == normal_groundtruth
+    return False
 
 def ems(prediction, ground_truth):
     return exact_match_score(prediction, ground_truth)
@@ -69,7 +68,6 @@ data_8 = pd.read_csv(source_file8)
 data_9 = pd.read_csv(source_file9)
 data_10 = pd.read_csv(source_file10)
 
-ground_truths = data_1["ground_truths"]
 
 accuracy = []
 ground_truths = []
