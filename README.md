@@ -1,5 +1,5 @@
 # Overview 
-In this repository, you will find a Python implementation of our RagFixer. As described in our paper, RagFixer is a novel Automatic Vulnerability Repair (AVR) approach that integrates retrieval-augmented template mining with prompt-based patch generation.
+In this repository, you will find a Python implementation of our PailGen. As described in our paper, RagFixer is a novel automatic vulnerability patch generation approach that integrates retrieval-augmented fix pattern mining with in-context learning.
 # Setting up the environment
 You can set up the environment by following commands:
 ```
