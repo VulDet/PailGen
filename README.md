@@ -32,7 +32,7 @@ After preprocessing dataset, you can obtain two .csv files, i.e., train.csv and 
 cd fix_patterns
 python generate_patterns.py
 ```
-The above command generates fix templates from the retrieved relevant vulnerability-fix cases. The file retrieved_results_bigvul_cvefixes_top50.json contains the retrieved results of our hybrid retriever. In this file, each vulnerable code sample includes the top 50 most relevant vulnerability-fix pairs. We follow [DPR](https://github.com/facebookresearch/DPR) to train and test our hybrid retriever.  
+The above command generates fix patterns from the retrieved relevant vulnerability-fix cases. The file retrieved_results_bigvul_cvefixes_top50.json contains the retrieved results of our hybrid retriever. In this file, each vulnerable code sample includes the top 50 most relevant vulnerability-fix pairs. We follow [DPR](https://github.com/facebookresearch/DPR) to train and test our hybrid retriever.  
 ```
 cd ..
 python process_prompt_data.py
