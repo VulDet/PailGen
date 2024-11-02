@@ -59,7 +59,7 @@ similar_diff_codes = data['similar_diff']
 similar_patches = data['similar_patch_code']
 
 prompt_base = "### Vulnerable code: {code} ### Task: The code contains a vulnerability. Note that <S2SV_StartVul> and <S2SV_EndVul> indicate the start and the end of vulnerable code lines. Thus the vulnerable code lines are: {vul_line}. Please generate a diff to fix the vulnerability."
-prompt_augment = "### Vulnerable code: {code} ### The Abstract Syntax Tree (AST) of the code is: {ast}. ### Task: The code contains a vulnerability. Note that <S2SV_StartVul> and <S2SV_EndVul> indicate the start and the end of vulnerable code lines. Thus the vulnerable code lines are: {vul_line}. Please generate a diff to fix the vulnerability. Here is an example of relevant patches: {relevant_patch} and the fix template generated from the AST of relevant vulnerability-fix pair: {fix_template}."
+prompt_augment = "### Vulnerable code: {code} ### The Abstract Syntax Tree (AST) of the code is: {ast}. ### Task: The code contains a vulnerability. Note that <S2SV_StartVul> and <S2SV_EndVul> indicate the start and the end of vulnerable code lines. Thus the vulnerable code lines are: {vul_line}. Please generate a diff to fix the vulnerability. Here is an example of relevant patches: {relevant_patch} and the fix pattern generated from the AST of relevant vulnerability-fix pair: {fix_pattern}."
 prompt = prompt_augment
 print(prompt)
 
@@ -84,7 +84,7 @@ for i in tqdm(range(len(sources))):
 
     relevant_patch = similar_diff_codes[i]
 
-    new_vul_code = prompt.format(code=vul_code, ast=ast, vul_line=vul_line, relevant_patch=relevant_patch, fix_template=template)
+    new_vul_code = prompt.format(code=vul_code, ast=ast, vul_line=vul_line, relevant_patch=relevant_patch, fix_pattern=template)
     messages = [
                 {'role':'system', 
                  'content': 'You are a helpful assistant'},
