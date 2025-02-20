@@ -3,7 +3,7 @@ In this repository, you will find a Python implementation of our PailGen. As des
 # Setting up the environment
 You can set up the environment by following commands:
 ```
-conda create -n RagFixer python=3.9.7
+conda create -n PailGen python=3.9.7
 pip install transformers
 pip install torch
 pip install numpy
