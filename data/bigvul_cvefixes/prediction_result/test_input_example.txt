@@ -1,0 +1,127 @@
+filename: CVE-2015-7509--namei.c
+
+vulnerable code:
+int ext4_orphan_add(handle_t *handle, struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
+	struct ext4_iloc iloc;
+	int err = 0, rc;
+	if (!ext4_handle_valid(handle))
+		return 0;
+	mutex_lock(&EXT4_SB(sb)->s_orphan_lock);
+	if (!list_empty(&EXT4_I(inode)->i_orphan))
+		goto out_unlock;
+	J_ASSERT((S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
+		  S_ISLNK(inode->i_mode)) || inode->i_nlink == 0);
+
+	BUFFER_TRACE(EXT4_SB(sb)->s_sbh, "get_write_access");
+	err = ext4_journal_get_write_access(handle, EXT4_SB(sb)->s_sbh);
+	if (err)
+		goto out_unlock;
+
+	err = ext4_reserve_inode_write(handle, inode, &iloc);
+	if (err)
+		goto out_unlock;
+	if (NEXT_ORPHAN(inode) && NEXT_ORPHAN(inode) <=
+		(le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count)))
+			goto mem_insert;
+	NEXT_ORPHAN(inode) = le32_to_cpu(EXT4_SB(sb)->s_es->s_last_orphan);
+	EXT4_SB(sb)->s_es->s_last_orphan = cpu_to_le32(inode->i_ino);
+	err = ext4_handle_dirty_super(handle, sb);
+	rc = ext4_mark_iloc_dirty(handle, inode, &iloc);
+	if (!err)
+		err = rc;
+mem_insert:
+	if (!err)
+		list_add(&EXT4_I(inode)->i_orphan, &EXT4_SB(sb)->s_orphan);
+	jbd_debug(4, "superblock will point to %lu\n", inode->i_ino);
+	jbd_debug(4, "orphan inode %lu will point to %d\n",
+			inode->i_ino, NEXT_ORPHAN(inode));
+out_unlock:
+	mutex_unlock(&EXT4_SB(sb)->s_orphan_lock);
+	ext4_std_error(inode->i_sb, err);
+	return err;
+}
+
+patched code:
+int ext4_orphan_add(handle_t *handle, struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
+	struct ext4_iloc iloc;
+	int err = 0, rc;
+	if (handle == NULL || !ext4_handle_valid(handle))
+		return 0;
+	mutex_lock(&EXT4_SB(sb)->s_orphan_lock);
+	if (!list_empty(&EXT4_I(inode)->i_orphan))
+		goto out_unlock;
+	J_ASSERT((S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
+		  S_ISLNK(inode->i_mode)) || inode->i_nlink == 0);
+	BUFFER_TRACE(EXT4_SB(sb)->s_sbh, "get_write_access");
+	err = ext4_journal_get_write_access(handle, EXT4_SB(sb)->s_sbh);
+	if (err)
+		goto out_unlock;
+	err = ext4_reserve_inode_write(handle, inode, &iloc);
+	if (err)
+		goto out_unlock;
+	if (NEXT_ORPHAN(inode) && NEXT_ORPHAN(inode) <=
+		(le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count)))
+			goto mem_insert;
+	NEXT_ORPHAN(inode) = le32_to_cpu(EXT4_SB(sb)->s_es->s_last_orphan);
+	EXT4_SB(sb)->s_es->s_last_orphan = cpu_to_le32(inode->i_ino);
+	err = ext4_handle_dirty_super(handle, sb);
+	rc = ext4_mark_iloc_dirty(handle, inode, &iloc);
+	if (!err)
+		err = rc;
+mem_insert:
+	if (!err)
+		list_add(&EXT4_I(inode)->i_orphan, &EXT4_SB(sb)->s_orphan);
+	jbd_debug(4, "superblock will point to %lu\n", inode->i_ino);
+	jbd_debug(4, "orphan inode %lu will point to %d\n",
+			inode->i_ino, NEXT_ORPHAN(inode));
+out_unlock:
+	mutex_unlock(&EXT4_SB(sb)->s_orphan_lock);
+	ext4_std_error(inode->i_sb, err);
+	return err;
+}
+
+A. Benign Inputs:
+1. Scenario: Journal enabled, valid handle, inode not in orphan list
+    s_journal is non-NULL.
+    handle is a valid journal handle.
+    inode has i_orphan list empty.
+    inode->i_mode is regular file (S_ISREG), and i_nlink = 0.
+    Expected Behavior: Inode is added to the orphan list; returns 0.
+2. Scenario: Journal disabled
+    s_journal is NULL (no journal configured).
+    handle is NULL or arbitrary value.
+    Expected Behavior: Function returns 0 immediately without locking.
+3. Scenario: Journal enabled, inode already in orphan list
+    s_journal is non-NULL.
+    inode->i_orphan list is not empty (already linked).
+    Expected Behavior: Skips adding the inode; returns 0.
+4. Scenario: Valid directory inode with active links
+    s_journal is non-NULL.
+    inode->i_mode is directory (S_ISDIR), i_nlink > 0.
+    Expected Behavior: Passes J_ASSERT and proceeds (orphan allowed for directories).
+5. Scenario: Error during inode reservation
+    s_journal is non-NULL.
+    ext4_reserve_inode_write() returns an error (e.g., disk full).
+    Expected Behavior: Error propagated; mutex properly unlocked.
+
+B. Buggy Inputs:
+1. Scenario: NULL handle with active journal
+    s_journal is non-NULL (journal enabled).
+    handle is NULL.
+    Expected Impact: Null pointer dereference in ext4_journal_get_write_access().
+2. Scenario: Corrupted orphan list in inode
+    inode->i_orphan list is uninitialized or contains cyclic pointers.
+    Expected Impact: list_empty() or list_add() causes a kernel panic.
+3. Scenario: Invalid NEXT_ORPHAN value
+    NEXT_ORPHAN(inode) is 0xFFFFFFFF (exceeds s_inodes_count).
+    Expected Impact: Bypasses orphan linkage logic, corrupting superblock metadata.
+4. Scenario: Unsupported inode type with active links
+    inode->i_mode is a socket (S_IFSOCK), i_nlink > 0.
+    Expected Impact: Violates J_ASSERT in debug builds; undefined behavior in production.
+5. Scenario: Invalid superblock metadata
+    s_es->s_last_orphan is corrupted (e.g., points to a non-existent inode).
+    Expected Impact: Orphan list chain corruption during ext4_handle_dirty_super().
